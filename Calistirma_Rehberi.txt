@@ -1,133 +1,353 @@
-1. Once Bu 3 Programi Kur
--------------------------
+Credentia Calistirma Rehberi
+============================
 
-Uygulamayi calistirmak icin bilgisayarinda su 3 program kurulu olmali:
+TURKCE
+------
 
-1) Docker Desktop
+Bu rehber, Credentia uygulamasini baska bir bilgisayarda calistirmak icindir.
+Uygulama Docker olmadan da calisir. Docker sadece PostgreSQL veritabanini kolay
+baslatmak icin kullanilir.
+
+
+1. Gerekli programlar
+---------------------
+
+Bilgisayarda su programlar kurulu olmali:
+
+1) Node.js
    Indirme adresi:
-   https://www.docker.com/products/docker-desktop/
+   https://nodejs.org/
+
+   LTS surumunu kurmak yeterlidir.
 
 2) Python 3
    Indirme adresi:
    https://www.python.org/downloads/
 
-   Kurarken "Add Python to PATH" secenegi varsa isaretle.
+   Kurarken "Add Python to PATH" secenegi varsa isaretleyin.
 
-3) Node.js
+3) PostgreSQL
+   Docker kullanmayacaksaniz PostgreSQL bilgisayara normal program olarak
+   kurulmalidir.
+
    Indirme adresi:
-   https://nodejs.org/
-
-   LTS surumunu kurman yeterli.
+   https://www.postgresql.org/download/
 
 
-2. Docker Desktop'i Ac
+2. PostgreSQL ayarlari
 ----------------------
 
-Docker Desktop kurulduktan sonra programi ac.
+PostgreSQL kurulduktan sonra uygulamanin baglanacagi veritabani hazir olmalidir.
 
-Tamamen acilmasini bekle.
-Docker acilmadan uygulama calismayabilir.
+Gerekli bilgiler:
+
+Veritabani adi: credentia
+Kullanici adi: credentia
+Sifre: credentia
+Port: 5432
+
+Eger PostgreSQL kurarken farkli bir sifre veya kullanici belirlediyseniz,
+proje klasorundeki .env dosyasinda DATABASE_URL satirini buna gore duzenleyin.
+
+Varsayilan .env degeri:
+
+DATABASE_URL=postgresql+psycopg://credentia:credentia@localhost:5432/credentia
 
 
-3. Credent Klasorunu Ac
+3. Proje klasorunu acin
 -----------------------
 
-Sana gelen klasorun adi buyuk ihtimalle:
+Size verilen klasorun adi genelde:
 
 Credent
 
-Bu klasoru masaustune veya istedigin bir yere koyabilirsin.
-
-Sonra klasorun icine gir.
-
-
-4. Uygulamayi Baslat
---------------------
-
-Credent klasorunun icinde su dosyayi bul:
-
-calistir.bat
-
-Bu dosyaya cift tikla.
-
-Ilk acilista biraz bekleyebilir.
-Bu normaldir.
-
-Bu dosya gerekli seyleri otomatik hazirlamaya calisir:
-
-- Veritabanini baslatir
-- Backend'i baslatir
-- Frontend'i baslatir
-- Eksik paketler varsa yukler
+Bu klasoru masaustune veya istediginiz bir yere koyabilirsiniz.
+Sonra klasorun icine girin.
 
 
-5. Uygulamayi Ac
-----------------
+4. Ilk kurulum
+--------------
 
-calistir.bat calistiktan sonra tarayicini ac.
+Ilk kez calistiracaksaniz internet baglantisi gerekir.
+Backend ve frontend paketleri bilgisayara yuklenir.
 
-Adres satirina sunu yaz:
+Backend icin:
+
+1) Credent klasorunun icinde backend klasorune girin.
+2) Komut satirinda su komutlari calistirin:
+
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+
+Frontend icin:
+
+1) Credent klasorunun icinde frontend klasorune girin.
+2) Komut satirinda su komutu calistirin:
+
+npm install
+
+Bu adimlar sadece ilk kurulumda veya paketler eksikse gerekir.
+
+
+5. Uygulamayi calistirma
+------------------------
+
+Onemli:
+Docker kullanmiyorsaniz PostgreSQL servisi acik olmalidir.
+
+Backend'i baslatmak icin:
+
+cd backend
+.\.venv\Scripts\activate
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+Yeni bir komut penceresi acip frontend'i baslatmak icin:
+
+cd frontend
+npm run dev
+
+Sonra tarayicida su adrese girin:
 
 http://localhost:3000
 
-Credentia uygulamasi burada acilir.
+Backend API adresi:
+
+http://localhost:8000/docs
 
 
-6. Uygulamayi Kapatmak Icin
----------------------------
+6. calistir.bat hakkinda
+------------------------
 
-Credent klasorunun icinde su dosyayi bul:
+Klasorde calistir.bat dosyasi vardir.
+Bu dosya uygulamayi kolay baslatmak icin hazirlanmistir.
 
-durdur.bat
+Ancak mevcut calistir.bat, PostgreSQL'i Docker ile baslatmaya calisir.
+Yani Docker kullanmayacaksaniz yukaridaki manuel calistirma adimlarini kullanin.
 
-Uygulamayi kapatmak istediginde bu dosyaya cift tikla.
+Docker kurulu ve aciksa calistir.bat dosyasina cift tiklayarak uygulamayi
+baslatabilirsiniz.
 
 
-7. Hata Olursa
+7. Uygulamayi kapatma
+---------------------
+
+Backend ve frontend pencerelerini kapatabilirsiniz.
+
+Eger calistir.bat ile baslattiysaniz klasordeki durdur.bat dosyasina
+cift tiklayabilirsiniz.
+
+
+8. Hata olursa
 --------------
 
-Eger uygulama acilmazsa once sunlari kontrol et:
+Uygulama acilmazsa sunlari kontrol edin:
 
-1) Docker Desktop acik mi?
+1) Node.js kurulu mu?
 2) Python 3 kurulu mu?
-3) Node.js kurulu mu?
-4) Internet var mi?
+3) PostgreSQL kurulu ve calisiyor mu?
+4) credentia veritabani var mi?
+5) .env dosyasindaki DATABASE_URL dogru mu?
+6) Internet baglantisi var mi?
 
-Sonra sunu dene:
-
-1) durdur.bat dosyasini calistir.
-2) Sonra tekrar calistir.bat dosyasini calistir.
-
-
-8. Hata Dosyalari
------------------
-
-Sorun devam ederse Credent klasorunun icindeki su klasore bak:
+Log dosyalari icin:
 
 logs
 
-Bu klasorde hata kayitlari bulunur.
-
-En onemli dosyalar:
+Onemli log dosyalari:
 
 backend.err.log
 frontend.err.log
 
-Bu dosyalardaki hata mesajlari, sorunun nedenini gormek icindir.
 
-
-9. Kisa Ozet
+9. Kisa ozet
 ------------
 
-Kisaca yapman gerekenler:
+Docker olmadan calistirmak icin:
 
-1) Docker Desktop kur.
+1) Node.js kur.
 2) Python 3 kur.
-3) Node.js kur.
-4) Docker Desktop'i ac.
-5) Sana gelen Credent klasorunu ac.
-6) calistir.bat dosyasina cift tikla.
-7) Tarayicida http://localhost:3000 adresine gir.
+3) PostgreSQL kur.
+4) PostgreSQL'de credentia veritabanini hazirla.
+5) backend icinde pip install -r requirements.txt calistir.
+6) frontend icinde npm install calistir.
+7) Backend'i baslat.
+8) Frontend'i baslat.
+9) Tarayicida http://localhost:3000 adresine gir.
 
-Hepsi bu.
 
+
+ENGLISH
+-------
+
+This guide explains how to run the Credentia app on another computer.
+The app can run without Docker. Docker is only used to start PostgreSQL more
+easily.
+
+
+1. Required programs
+--------------------
+
+The computer needs these programs:
+
+1) Node.js
+   Download:
+   https://nodejs.org/
+
+   The LTS version is enough.
+
+2) Python 3
+   Download:
+   https://www.python.org/downloads/
+
+   During installation, enable "Add Python to PATH" if you see that option.
+
+3) PostgreSQL
+   If you do not want to use Docker, PostgreSQL must be installed directly on
+   the computer.
+
+   Download:
+   https://www.postgresql.org/download/
+
+
+2. PostgreSQL settings
+----------------------
+
+After installing PostgreSQL, prepare the database used by the app.
+
+Required values:
+
+Database name: credentia
+Username: credentia
+Password: credentia
+Port: 5432
+
+If you used a different username or password while installing PostgreSQL,
+edit the DATABASE_URL line in the .env file inside the project folder.
+
+Default .env value:
+
+DATABASE_URL=postgresql+psycopg://credentia:credentia@localhost:5432/credentia
+
+
+3. Open the project folder
+--------------------------
+
+The folder you received is usually named:
+
+Credent
+
+You can place this folder on the Desktop or anywhere you want.
+Then open the folder.
+
+
+4. First setup
+--------------
+
+An internet connection is needed for the first setup.
+Backend and frontend packages will be installed on the computer.
+
+For the backend:
+
+1) Open the backend folder inside Credent.
+2) Run these commands:
+
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+
+For the frontend:
+
+1) Open the frontend folder inside Credent.
+2) Run this command:
+
+npm install
+
+These steps are only needed during the first setup or when packages are
+missing.
+
+
+5. Running the app
+------------------
+
+Important:
+If you are not using Docker, the PostgreSQL service must be running.
+
+Start the backend:
+
+cd backend
+.\.venv\Scripts\activate
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+Open a new command window and start the frontend:
+
+cd frontend
+npm run dev
+
+Then open this address in your browser:
+
+http://localhost:3000
+
+Backend API address:
+
+http://localhost:8000/docs
+
+
+6. About calistir.bat
+---------------------
+
+There is a calistir.bat file in the folder.
+It was created to start the app more easily.
+
+However, the current calistir.bat tries to start PostgreSQL with Docker.
+So if you do not use Docker, follow the manual steps above.
+
+If Docker is installed and running, you can double-click calistir.bat to start
+the app.
+
+
+7. Stopping the app
+-------------------
+
+You can close the backend and frontend command windows.
+
+If you started the app with calistir.bat, you can double-click durdur.bat in
+the project folder.
+
+
+8. If something goes wrong
+--------------------------
+
+If the app does not open, check these:
+
+1) Is Node.js installed?
+2) Is Python 3 installed?
+3) Is PostgreSQL installed and running?
+4) Does the credentia database exist?
+5) Is the DATABASE_URL value in .env correct?
+6) Is there an internet connection?
+
+Log folder:
+
+logs
+
+Important log files:
+
+backend.err.log
+frontend.err.log
+
+
+9. Short summary
+----------------
+
+To run without Docker:
+
+1) Install Node.js.
+2) Install Python 3.
+3) Install PostgreSQL.
+4) Prepare the credentia database in PostgreSQL.
+5) Run pip install -r requirements.txt inside backend.
+6) Run npm install inside frontend.
+7) Start the backend.
+8) Start the frontend.
+9) Open http://localhost:3000 in the browser.

@@ -15,6 +15,8 @@ from app.models.transaction import Transaction, TransactionType
 from app.models.user import User
 from app.modules.budgets.routes import create_budget, list_budgets
 from app.modules.categories.routes import create_category, delete_category
+from app.modules.reports.export_service import build_excel, build_pdf
+from app.modules.reports.service import build_report_data
 from app.modules.transactions.routes import create_transaction
 from app.schemas.budget import BudgetCreate
 from app.schemas.category import CategoryCreate
@@ -156,3 +158,29 @@ def test_deleting_category_removes_related_transactions_and_budgets(db_session):
     assert db_session.scalars(select(Budget)).all() == []
     assert list_budgets(db_session) == []
     assert db_session.scalars(select(User)).all()
+
+
+def test_report_export_generates_valid_pdf_and_excel(db_session):
+    category = create_category(
+        CategoryCreate(name="Market", type=TransactionType.expense, color="#0f766e"),
+        db_session,
+    )
+    create_transaction(
+        TransactionCreate(
+            type=TransactionType.expense,
+            amount=125,
+            occurred_on=date(2026, 6, 15),
+            category_id=category.id,
+            description="Market",
+        ),
+        db_session,
+    )
+
+    report = build_report_data(db_session, db_session.scalars(select(User)).first().id, 2026, 6)
+    pdf = build_pdf(report, "TRY")
+    excel = build_excel(report, "USD")
+
+    assert pdf.startswith(b"%PDF")
+    assert len(pdf) > 1000
+    assert excel.startswith(b"PK")
+    assert len(excel) > 1000

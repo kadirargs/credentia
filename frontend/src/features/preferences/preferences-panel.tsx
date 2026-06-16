@@ -66,6 +66,17 @@ const languageOptions = [
   }
 ] as const;
 
+function formatTryRate(rate: number | undefined, language: "tr" | "en") {
+  if (!rate || !Number.isFinite(rate) || rate <= 0) {
+    return "-";
+  }
+
+  return (1 / rate).toLocaleString(language === "en" ? "en-US" : "tr-TR", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2
+  });
+}
+
 export function PreferencesPanel() {
   const { theme, setTheme } = useTheme();
   const { dashboardViewMode, setDashboardViewMode } = useDashboardViewMode();
@@ -175,8 +186,7 @@ export function PreferencesPanel() {
                 : `${t("preferences.rateDate")}: ${exchangeRateDate ?? "-"}`}
           </span>
           <span>
-            1 TL = ${exchangeRates.USD?.toLocaleString("tr-TR", { maximumFractionDigits: 5 }) ?? "-"} / €
-            {exchangeRates.EUR?.toLocaleString("tr-TR", { maximumFractionDigits: 5 }) ?? "-"}
+            1 USD = {formatTryRate(exchangeRates.USD, language)} TL / 1 EUR = {formatTryRate(exchangeRates.EUR, language)} TL
           </span>
           <button className="small-button" type="button" onClick={() => void refreshExchangeRates()}>
             {t("preferences.refreshRate")}

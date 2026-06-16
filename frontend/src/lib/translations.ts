@@ -63,6 +63,8 @@ export type TranslationKey =
   | "dashboard.eyebrow"
   | "dashboard.title"
   | "dashboard.description"
+  | "dashboard.overviewPeriod"
+  | "dashboard.overviewPeriodDescription"
   | "dashboard.totalIncome"
   | "dashboard.totalExpense"
   | "dashboard.netBalance"
@@ -197,6 +199,8 @@ export const translations: Record<LanguageCode, TranslationMap> = {
     "dashboard.eyebrow": "Finans özeti",
     "dashboard.title": "Genel görünüm",
     "dashboard.description": "Gelir, gider, net bakiye, son işlemler ve kategori bazlı dağılımlar.",
+    "dashboard.overviewPeriod": "Genel görünüm dönemi",
+    "dashboard.overviewPeriodDescription": "Dashboard varsayılan olarak mevcut ayı gösterir. İstersen önceki ayları veya tüm zamanı seçebilirsin.",
     "dashboard.totalIncome": "Toplam gelir",
     "dashboard.totalExpense": "Toplam gider",
     "dashboard.netBalance": "Net bakiye",
@@ -328,6 +332,8 @@ export const translations: Record<LanguageCode, TranslationMap> = {
     "dashboard.eyebrow": "Financial summary",
     "dashboard.title": "Overview",
     "dashboard.description": "Income, expenses, net balance, recent transactions and category distributions.",
+    "dashboard.overviewPeriod": "Overview period",
+    "dashboard.overviewPeriodDescription": "By default the dashboard shows the current month. You can switch to previous months or all time.",
     "dashboard.totalIncome": "Total income",
     "dashboard.totalExpense": "Total expense",
     "dashboard.netBalance": "Net balance",

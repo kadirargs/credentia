@@ -12,7 +12,7 @@ import { formatMonthYear } from "@/lib/format";
 
 import { CategoryChart } from "./category-chart";
 import { MetricCard } from "./metric-card";
-import type { AnalyticsSummaryV2, CategoryBreakdownItem, MonthlySummary, TopCategoryItem } from "./types";
+import type { AnalyticsSummaryV2, CategoryBreakdownItem, TopCategoryItem } from "./types";
 
 type BreakdownType = "income" | "expense";
 type MainPanel = "transactions" | "budgets";
@@ -23,13 +23,12 @@ type Period = {
   month: number;
 };
 
+type DashboardPeriod = Period | "all";
+
 type DashboardData = {
-  analyticsSummary: AnalyticsSummaryV2;
   budgetSummary: BudgetSummary;
   budgets: Budget[];
   categories: Category[];
-  incomeBreakdown: CategoryBreakdownItem[];
-  expenseBreakdown: CategoryBreakdownItem[];
   transactions: Transaction[];
 };
 
@@ -65,8 +64,49 @@ function recentMonthOptions(language: "tr" | "en") {
   });
 }
 
-function periodKey(period: Period) {
+function dashboardPeriodOptions(language: "tr" | "en") {
+  return [
+    ...recentMonthOptions(language).map((option) => ({
+      ...option,
+      value: option.key
+    })),
+    {
+      key: "all",
+      label: language === "en" ? "All time" : "Tüm zaman",
+      value: "all"
+    }
+  ];
+}
+
+function isAllPeriod(period: DashboardPeriod): period is "all" {
+  return period === "all";
+}
+
+function periodKey(period: DashboardPeriod) {
+  if (isAllPeriod(period)) return "all";
   return `${period.year}-${period.month}`;
+}
+
+function parsePeriodKey(value: string): DashboardPeriod {
+  if (value === "all") return "all";
+  const [year, month] = value.split("-").map(Number);
+  return { year, month };
+}
+
+function previousPeriod(period: Period): Period {
+  if (period.month === 1) {
+    return { year: period.year - 1, month: 12 };
+  }
+
+  return { year: period.year, month: period.month - 1 };
+}
+
+function periodLabel(period: DashboardPeriod, language: "tr" | "en") {
+  if (isAllPeriod(period)) {
+    return language === "en" ? "All time" : "Tüm zaman";
+  }
+
+  return formatMonthYear(period.month, period.year, language);
 }
 
 function isTransactionInPeriod(transaction: Transaction, period: Period) {
@@ -74,21 +114,53 @@ function isTransactionInPeriod(transaction: Transaction, period: Period) {
   return year === period.year && month === period.month;
 }
 
+function filterTransactionsByPeriod(transactions: Transaction[], period: DashboardPeriod) {
+  if (isAllPeriod(period)) return transactions;
+  return transactions.filter((transaction) => isTransactionInPeriod(transaction, period));
+}
+
 function hasComparisonData(previousValue: number, changePercent: number) {
   return previousValue !== 0 && Number.isFinite(previousValue) && Number.isFinite(changePercent);
 }
 
-function summaryFallback(summary: MonthlySummary): AnalyticsSummaryV2 {
+function summarizeTransactions(transactions: Transaction[]) {
+  let income = 0;
+  let expense = 0;
+
+  for (const transaction of transactions) {
+    const amount = Math.abs(Number(transaction.amount) || 0);
+    if (transaction.type === "income") income += amount;
+    if (transaction.type === "expense") expense += amount;
+  }
+
   return {
-    selectedMonthIncome: summary.income,
-    selectedMonthExpense: summary.expense,
-    selectedMonthNetBalance: summary.balance,
-    previousMonthIncome: 0,
-    previousMonthExpense: 0,
-    previousMonthNetBalance: 0,
-    incomeChangePercent: 0,
-    expenseChangePercent: 0,
-    netBalanceChangePercent: 0
+    income,
+    expense,
+    balance: income - expense
+  };
+}
+
+function safeChangePercent(current: number, previous: number) {
+  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return 0;
+  return Math.round(((current - previous) / Math.abs(previous)) * 10000) / 100;
+}
+
+function buildDashboardSummary(transactions: Transaction[], period: DashboardPeriod): AnalyticsSummaryV2 {
+  const selected = summarizeTransactions(filterTransactionsByPeriod(transactions, period));
+  const previous = isAllPeriod(period)
+    ? { income: 0, expense: 0, balance: 0 }
+    : summarizeTransactions(filterTransactionsByPeriod(transactions, previousPeriod(period)));
+
+  return {
+    selectedMonthIncome: selected.income,
+    selectedMonthExpense: selected.expense,
+    selectedMonthNetBalance: selected.balance,
+    previousMonthIncome: previous.income,
+    previousMonthExpense: previous.expense,
+    previousMonthNetBalance: previous.balance,
+    incomeChangePercent: safeChangePercent(selected.income, previous.income),
+    expenseChangePercent: safeChangePercent(selected.expense, previous.expense),
+    netBalanceChangePercent: safeChangePercent(selected.balance, previous.balance)
   };
 }
 
@@ -125,8 +197,8 @@ function buildTopCategory(
   return { total, topCategory };
 }
 
-function buildCategoryInsights(transactions: Transaction[], categories: Category[], period: Period): CategoryInsights {
-  const selectedTransactions = transactions.filter((transaction) => isTransactionInPeriod(transaction, period));
+function buildCategoryInsights(transactions: Transaction[], categories: Category[], period: DashboardPeriod): CategoryInsights {
+  const selectedTransactions = filterTransactionsByPeriod(transactions, period);
   const expense = buildTopCategory(selectedTransactions, categories, "expense");
   const income = buildTopCategory(selectedTransactions, categories, "income");
 
@@ -136,6 +208,30 @@ function buildCategoryInsights(transactions: Transaction[], categories: Category
     topExpenseCategory: expense.topCategory,
     topIncomeCategory: income.topCategory
   };
+}
+
+function buildCategoryBreakdown(transactions: Transaction[], categories: Category[], type: BreakdownType): CategoryBreakdownItem[] {
+  const categoryMap = new Map(categories.map((category) => [category.id, category]));
+  const totals = new Map<number | null, number>();
+
+  for (const transaction of transactions) {
+    if (transaction.type !== type) continue;
+    const key = transaction.category_id ?? null;
+    totals.set(key, (totals.get(key) ?? 0) + Math.abs(Number(transaction.amount) || 0));
+  }
+
+  return Array.from(totals.entries())
+    .map(([categoryId, amount]) => {
+      const category = categoryId ? categoryMap.get(categoryId) : null;
+
+      return {
+        category: category?.name ?? "Kategori yok",
+        amount,
+        color: category?.color ?? "#94A3B8"
+      };
+    })
+    .filter((item) => item.amount > 0)
+    .sort((left, right) => right.amount - left.amount);
 }
 
 function isValidTopCategory(category: TopCategoryItem | null) {
@@ -185,40 +281,35 @@ export function DashboardPanel() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [selectedBreakdown, setSelectedBreakdown] = useState<BreakdownType>("expense");
   const [mainPanel, setMainPanel] = useState<MainPanel>("transactions");
-  const [categoryPeriod, setCategoryPeriod] = useState<Period>(() => currentPeriod());
+  const [dashboardPeriod, setDashboardPeriod] = useState<DashboardPeriod>(() => currentPeriod());
   const [status, setStatus] = useState<LoadStatus>("loading");
 
   const loadDashboard = useCallback(async () => {
-    const { year, month } = currentPeriod();
+    const budgetSummaryPath = isAllPeriod(dashboardPeriod)
+      ? "/api/budgets/summary"
+      : `/api/budgets/summary?year=${dashboardPeriod.year}&month=${dashboardPeriod.month}`;
 
     try {
       setStatus((current) => (current === "ready" ? "ready" : "loading"));
-      const [analyticsSummaryResult, monthlySummary, incomeBreakdown, expenseBreakdown, transactions, categories, budgetSummary, budgets] =
+      const [transactions, categories, budgetSummary, budgets] =
         await Promise.all([
-          apiGet<AnalyticsSummaryV2>(`/api/analytics/v2/summary?year=${year}&month=${month}`).catch(() => null),
-          apiGet<MonthlySummary>("/api/analytics/monthly-summary"),
-          apiGet<CategoryBreakdownItem[]>("/api/analytics/category-breakdown?type=income"),
-          apiGet<CategoryBreakdownItem[]>("/api/analytics/category-breakdown?type=expense"),
           apiGet<Transaction[]>("/api/transactions"),
           apiGet<Category[]>("/api/categories"),
-          apiGet<BudgetSummary>("/api/budgets/summary"),
+          apiGet<BudgetSummary>(budgetSummaryPath),
           apiGet<Budget[]>("/api/budgets")
         ]);
 
       setData({
-        analyticsSummary: analyticsSummaryResult ?? summaryFallback(monthlySummary),
         budgetSummary,
         budgets,
         categories,
-        incomeBreakdown,
-        expenseBreakdown,
         transactions
       });
       setStatus("ready");
     } catch {
       setStatus("error");
     }
-  }, []);
+  }, [dashboardPeriod]);
 
   useEffect(() => {
     void loadDashboard();
@@ -241,8 +332,8 @@ export function DashboardPanel() {
   }, [loadDashboard]);
 
   const categoryInsights = useMemo(
-    () => buildCategoryInsights(data?.transactions ?? [], data?.categories ?? [], categoryPeriod),
-    [categoryPeriod, data?.categories, data?.transactions]
+    () => buildCategoryInsights(data?.transactions ?? [], data?.categories ?? [], dashboardPeriod),
+    [dashboardPeriod, data?.categories, data?.transactions]
   );
 
   if (status === "loading") {
@@ -253,23 +344,49 @@ export function DashboardPanel() {
     return <section className="card"><div className="state-card error">{t("dashboard.error")}</div></section>;
   }
 
-  const activeBreakdown = selectedBreakdown === "income" ? data.incomeBreakdown : data.expenseBreakdown;
+  const selectedTransactions = filterTransactionsByPeriod(data.transactions, dashboardPeriod);
+  const incomeBreakdown = buildCategoryBreakdown(selectedTransactions, data.categories, "income");
+  const expenseBreakdown = buildCategoryBreakdown(selectedTransactions, data.categories, "expense");
+  const activeBreakdown = selectedBreakdown === "income" ? incomeBreakdown : expenseBreakdown;
   const activeTitle = selectedBreakdown === "income" ? t("dashboard.incomeDistribution") : t("dashboard.expenseDistribution");
   const activeEmpty = selectedBreakdown === "income" ? t("dashboard.noIncomeCategory") : t("dashboard.noExpenseCategory");
-  const summary = data.analyticsSummary;
-  const monthOptions = recentMonthOptions(language);
-  const selectedPeriodLabel = formatMonthYear(categoryPeriod.month, categoryPeriod.year, language);
+  const summary = buildDashboardSummary(data.transactions, dashboardPeriod);
+  const periodOptions = dashboardPeriodOptions(language);
+  const selectedPeriodLabel = periodLabel(dashboardPeriod, language);
   const showDetailedAnalytics = dashboardViewMode === "detailed";
+  const showMonthlyComparison = showDetailedAnalytics && !isAllPeriod(dashboardPeriod);
 
   return (
     <>
+      <section className="card insight-controls dashboard-period-controls" style={{ marginBottom: 18 }}>
+        <div>
+          <h2>{t("dashboard.overviewPeriod")}</h2>
+          <p className="muted">{t("dashboard.overviewPeriodDescription")}</p>
+        </div>
+        <div className="insight-control-actions">
+          <label className="field compact-field">
+            <span>{t("common.month")}</span>
+            <select value={periodKey(dashboardPeriod)} onChange={(event) => setDashboardPeriod(parsePeriodKey(event.target.value))}>
+              {periodOptions.map((option) => (
+                <option key={option.key} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="secondary-button" type="button" onClick={loadDashboard}>
+            {t("common.refresh")}
+          </button>
+        </div>
+      </section>
+
       <div className="grid metrics">
         <MetricCard
           changePercent={summary.incomeChangePercent}
           comparisonUnavailable={!hasComparisonData(summary.previousMonthIncome, summary.incomeChangePercent)}
           label={t("dashboard.totalIncome")}
           selected={selectedBreakdown === "income" && mainPanel === "transactions"}
-          showComparison={showDetailedAnalytics}
+          showComparison={showMonthlyComparison}
           tone="positive"
           value={summary.selectedMonthIncome}
           onClick={() => {
@@ -282,7 +399,7 @@ export function DashboardPanel() {
           comparisonUnavailable={!hasComparisonData(summary.previousMonthExpense, summary.expenseChangePercent)}
           label={t("dashboard.totalExpense")}
           selected={selectedBreakdown === "expense" && mainPanel === "transactions"}
-          showComparison={showDetailedAnalytics}
+          showComparison={showMonthlyComparison}
           tone="negative"
           value={summary.selectedMonthExpense}
           onClick={() => {
@@ -294,7 +411,7 @@ export function DashboardPanel() {
           changePercent={summary.netBalanceChangePercent}
           comparisonUnavailable={!hasComparisonData(summary.previousMonthNetBalance, summary.netBalanceChangePercent)}
           label={t("dashboard.netBalance")}
-          showComparison={showDetailedAnalytics}
+          showComparison={showMonthlyComparison}
           tone={summary.selectedMonthNetBalance >= 0 ? "positive" : "negative"}
           value={summary.selectedMonthNetBalance}
         />
@@ -316,22 +433,6 @@ export function DashboardPanel() {
           <p className="muted">{t("dashboard.categoryHighlightsDescription")}</p>
         </div>
         <div className="insight-control-actions">
-          <label className="field compact-field">
-            <span>{t("common.month")}</span>
-            <select
-              value={periodKey(categoryPeriod)}
-              onChange={(event) => {
-                const [year, month] = event.target.value.split("-").map(Number);
-                setCategoryPeriod({ year, month });
-              }}
-            >
-              {monthOptions.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
           <button className="secondary-button" type="button" onClick={loadDashboard}>
             {t("common.refresh")}
           </button>
@@ -370,7 +471,7 @@ export function DashboardPanel() {
               <TransactionTable
                 categories={data.categories}
                 emptyMessage={t("dashboard.noTransactions")}
-                transactions={data.transactions.slice(0, 5)}
+                transactions={selectedTransactions.slice(0, 5)}
               />
             )}
           </div>

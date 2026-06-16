@@ -1,0 +1,17 @@
+.env
+.env.local
+.env.*.local
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+node_modules/
+.next/
+dist/
+build/
+npm-debug.log*
+
+postgres_data/
+logs/
+*.log

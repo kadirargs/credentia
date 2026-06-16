@@ -1,0 +1,133 @@
+1. Once Bu 3 Programi Kur
+-------------------------
+
+Uygulamayi calistirmak icin bilgisayarinda su 3 program kurulu olmali:
+
+1) Docker Desktop
+   Indirme adresi:
+   https://www.docker.com/products/docker-desktop/
+
+2) Python 3
+   Indirme adresi:
+   https://www.python.org/downloads/
+
+   Kurarken "Add Python to PATH" secenegi varsa isaretle.
+
+3) Node.js
+   Indirme adresi:
+   https://nodejs.org/
+
+   LTS surumunu kurman yeterli.
+
+
+2. Docker Desktop'i Ac
+----------------------
+
+Docker Desktop kurulduktan sonra programi ac.
+
+Tamamen acilmasini bekle.
+Docker acilmadan uygulama calismayabilir.
+
+
+3. Credent Klasorunu Ac
+-----------------------
+
+Sana gelen klasorun adi buyuk ihtimalle:
+
+Credent
+
+Bu klasoru masaustune veya istedigin bir yere koyabilirsin.
+
+Sonra klasorun icine gir.
+
+
+4. Uygulamayi Baslat
+--------------------
+
+Credent klasorunun icinde su dosyayi bul:
+
+calistir.bat
+
+Bu dosyaya cift tikla.
+
+Ilk acilista biraz bekleyebilir.
+Bu normaldir.
+
+Bu dosya gerekli seyleri otomatik hazirlamaya calisir:
+
+- Veritabanini baslatir
+- Backend'i baslatir
+- Frontend'i baslatir
+- Eksik paketler varsa yukler
+
+
+5. Uygulamayi Ac
+----------------
+
+calistir.bat calistiktan sonra tarayicini ac.
+
+Adres satirina sunu yaz:
+
+http://localhost:3000
+
+Credentia uygulamasi burada acilir.
+
+
+6. Uygulamayi Kapatmak Icin
+---------------------------
+
+Credent klasorunun icinde su dosyayi bul:
+
+durdur.bat
+
+Uygulamayi kapatmak istediginde bu dosyaya cift tikla.
+
+
+7. Hata Olursa
+--------------
+
+Eger uygulama acilmazsa once sunlari kontrol et:
+
+1) Docker Desktop acik mi?
+2) Python 3 kurulu mu?
+3) Node.js kurulu mu?
+4) Internet var mi?
+
+Sonra sunu dene:
+
+1) durdur.bat dosyasini calistir.
+2) Sonra tekrar calistir.bat dosyasini calistir.
+
+
+8. Hata Dosyalari
+-----------------
+
+Sorun devam ederse Credent klasorunun icindeki su klasore bak:
+
+logs
+
+Bu klasorde hata kayitlari bulunur.
+
+En onemli dosyalar:
+
+backend.err.log
+frontend.err.log
+
+Bu dosyalardaki hata mesajlari, sorunun nedenini gormek icindir.
+
+
+9. Kisa Ozet
+------------
+
+Kisaca yapman gerekenler:
+
+1) Docker Desktop kur.
+2) Python 3 kur.
+3) Node.js kur.
+4) Docker Desktop'i ac.
+5) Sana gelen Credent klasorunu ac.
+6) calistir.bat dosyasina cift tikla.
+7) Tarayicida http://localhost:3000 adresine gir.
+
+Hepsi bu.
+

@@ -29,7 +29,7 @@ const DASHBOARD_VIEW_STORAGE_KEY = "credentia-dashboard-view";
 const CURRENCY_STORAGE_KEY = "credentia-currency";
 const LANGUAGE_STORAGE_KEY = "credentia-language";
 const EXCHANGE_RATES_STORAGE_KEY = "credentia-exchange-rates";
-const EXCHANGE_RATE_API_URL = "https://api.frankfurter.dev/v2/rates?base=TRY&quotes=USD,EUR";
+const EXCHANGE_RATE_API_URL = "https://open.er-api.com/v6/latest/TRY";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 type ExchangeRates = Record<CurrencyCode, number>;
@@ -78,9 +78,16 @@ function readStoredExchangeRates(): StoredExchangeRates | null {
   }
 }
 
+function getLocalDateLabel() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function normalizeExchangeRates(payload: unknown): StoredExchangeRates {
   const rates: Partial<ExchangeRates> = { TRY: 1 };
-  let date = new Date().toISOString().slice(0, 10);
+  let date = getLocalDateLabel();
 
   if (Array.isArray(payload)) {
     for (const item of payload) {
@@ -92,8 +99,7 @@ function normalizeExchangeRates(payload: unknown): StoredExchangeRates {
       }
     }
   } else if (payload && typeof payload === "object") {
-    const row = payload as { date?: unknown; rates?: unknown; value?: unknown };
-    if (typeof row.date === "string") date = row.date;
+    const row = payload as { rates?: unknown; value?: unknown };
 
     if (row.rates && typeof row.rates === "object") {
       const sourceRates = row.rates as Record<string, unknown>;
@@ -138,7 +144,7 @@ export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode
     setExchangeRateStatus("loading");
 
     try {
-      const response = await fetch(EXCHANGE_RATE_API_URL);
+      const response = await fetch(`${EXCHANGE_RATE_API_URL}?_=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) {
         throw new Error("Exchange rate request failed");
       }

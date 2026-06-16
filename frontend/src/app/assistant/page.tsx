@@ -6,9 +6,9 @@ export default function AssistantPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Finans asistanı"
-        title="Credentia Asistan"
-        description="Finans verileriniz, uygulama kullanımı ve günlük planlama konularında sohbet edin."
+        eyebrowKey="assistant.eyebrow"
+        titleKey="assistant.title"
+        descriptionKey="assistant.description"
       />
       <AssistantPanel />
     </AppShell>

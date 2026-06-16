@@ -6,9 +6,9 @@ export default function CategoriesPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Kategoriler"
-        title="Harcama grupları"
-        description="Kategorileri PostgreSQL'e kaydet ve gerçek API'den listele."
+        eyebrowKey="categories.eyebrow"
+        titleKey="categories.title"
+        descriptionKey="categories.description"
       />
       <CategoriesPanel />
     </AppShell>

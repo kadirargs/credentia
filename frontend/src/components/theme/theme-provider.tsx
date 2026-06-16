@@ -3,6 +3,7 @@
 import { createContext, useContext, useCallback, useLayoutEffect, useMemo, useState } from "react";
 
 import { formatCurrency as formatCurrencyValue, type CurrencyCode } from "@/lib/format";
+import { normalizeLanguage, translate, type LanguageCode, type TranslationKey } from "@/lib/translations";
 
 type Theme = "light" | "dark";
 export type DashboardViewMode = "simple" | "detailed";
@@ -14,6 +15,9 @@ type ThemeContextValue = {
   setDashboardViewMode: (mode: DashboardViewMode) => void;
   currency: CurrencyCode;
   setCurrency: (currency: CurrencyCode) => void;
+  language: LanguageCode;
+  setLanguage: (language: LanguageCode) => void;
+  t: (key: TranslationKey) => string;
   exchangeRates: Partial<ExchangeRates>;
   exchangeRateDate: string | null;
   exchangeRateStatus: "idle" | "loading" | "ready" | "error";
@@ -23,6 +27,7 @@ type ThemeContextValue = {
 const THEME_STORAGE_KEY = "credentia-theme";
 const DASHBOARD_VIEW_STORAGE_KEY = "credentia-dashboard-view";
 const CURRENCY_STORAGE_KEY = "credentia-currency";
+const LANGUAGE_STORAGE_KEY = "credentia-language";
 const EXCHANGE_RATES_STORAGE_KEY = "credentia-exchange-rates";
 const EXCHANGE_RATE_API_URL = "https://api.frankfurter.dev/v2/rates?base=TRY&quotes=USD,EUR";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -50,6 +55,11 @@ function readStoredCurrency(): CurrencyCode {
   if (typeof window === "undefined") return "TRY";
   const storedCurrency = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
   return storedCurrency === "USD" || storedCurrency === "EUR" ? storedCurrency : "TRY";
+}
+
+function readStoredLanguage(): LanguageCode {
+  if (typeof window === "undefined") return "tr";
+  return normalizeLanguage(window.localStorage.getItem(LANGUAGE_STORAGE_KEY));
 }
 
 function readStoredExchangeRates(): StoredExchangeRates | null {
@@ -119,6 +129,7 @@ export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode
   const [theme, setThemeState] = useState<Theme>("light");
   const [dashboardViewMode, setDashboardViewModeState] = useState<DashboardViewMode>("detailed");
   const [currency, setCurrencyState] = useState<CurrencyCode>("TRY");
+  const [language, setLanguageState] = useState<LanguageCode>("tr");
   const [exchangeRates, setExchangeRates] = useState<Partial<ExchangeRates>>({ TRY: 1 });
   const [exchangeRateDate, setExchangeRateDate] = useState<string | null>(null);
   const [exchangeRateStatus, setExchangeRateStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -154,10 +165,12 @@ export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode
     const storedTheme = readStoredTheme();
     const storedDashboardViewMode = readStoredDashboardViewMode();
     const storedCurrency = readStoredCurrency();
+    const storedLanguage = readStoredLanguage();
     const storedExchangeRates = readStoredExchangeRates();
     setThemeState(storedTheme);
     setDashboardViewModeState(storedDashboardViewMode);
     setCurrencyState(storedCurrency);
+    setLanguageState(storedLanguage);
     if (storedExchangeRates) {
       setExchangeRates({ TRY: 1, ...storedExchangeRates.rates });
       setExchangeRateDate(storedExchangeRates.date);
@@ -188,12 +201,19 @@ export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode
           void refreshExchangeRates();
         }
       },
+      language,
+      setLanguage: (nextLanguage) => {
+        const normalizedLanguage = normalizeLanguage(nextLanguage);
+        setLanguageState(normalizedLanguage);
+        window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalizedLanguage);
+      },
+      t: (key) => translate(language, key),
       exchangeRates,
       exchangeRateDate,
       exchangeRateStatus,
       refreshExchangeRates
     }),
-    [currency, dashboardViewMode, exchangeRateDate, exchangeRateStatus, exchangeRates, refreshExchangeRates, theme]
+    [currency, dashboardViewMode, exchangeRateDate, exchangeRateStatus, exchangeRates, language, refreshExchangeRates, theme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -252,5 +272,17 @@ export function useCurrencyFormatter() {
 
       return formatCurrencyValue(safeValue * selectedRate, context.currency);
     }
+  };
+}
+
+export function useLanguage() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useLanguage must be used inside ThemeProvider");
+  }
+  return {
+    language: context.language,
+    setLanguage: context.setLanguage,
+    t: context.t
   };
 }

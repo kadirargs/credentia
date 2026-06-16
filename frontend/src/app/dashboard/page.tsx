@@ -6,9 +6,9 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Finans özeti"
-        title="Genel görünüm"
-        description="Gelir, gider, net bakiye, son işlemler ve kategori bazlı dağılımlar."
+        eyebrowKey="dashboard.eyebrow"
+        titleKey="dashboard.title"
+        descriptionKey="dashboard.description"
       />
       <DashboardPanel />
     </AppShell>

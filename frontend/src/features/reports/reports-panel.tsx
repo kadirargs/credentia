@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useCurrencyFormatter, useCurrencyPreference } from "@/components/theme/theme-provider";
+import { useCurrencyFormatter, useCurrencyPreference, useLanguage } from "@/components/theme/theme-provider";
 import { CategoryChart } from "@/features/dashboard/category-chart";
 import type { CategoryBreakdownItem, MonthlySummary } from "@/features/dashboard/types";
 import { apiDownload, apiGet } from "@/lib/api";
 import { formatDate, formatMonthYear } from "@/lib/format";
+import type { TranslationKey } from "@/lib/translations";
 
 type ReportTransaction = {
   occurred_on: string;
@@ -38,7 +39,7 @@ function currentPeriod(): Period {
   };
 }
 
-function recentMonthOptions() {
+function recentMonthOptions(language: "tr" | "en") {
   const today = new Date();
 
   return Array.from({ length: 12 }, (_, index) => {
@@ -48,7 +49,7 @@ function recentMonthOptions() {
 
     return {
       key: `${year}-${month}`,
-      label: formatMonthYear(month, year),
+      label: formatMonthYear(month, year, language),
       month,
       year
     };
@@ -63,19 +64,20 @@ function filePeriod(period: Period) {
   return `${period.year}-${String(period.month).padStart(2, "0")}`;
 }
 
-function transactionTypeLabel(type: ReportTransaction["type"]) {
-  return type === "income" ? "Gelir" : "Gider";
+function transactionTypeLabel(type: ReportTransaction["type"]): TranslationKey {
+  return type === "income" ? "common.income" : "common.expense";
 }
 
 export function ReportsPanel() {
   const { currency } = useCurrencyPreference();
   const { formatCurrency } = useCurrencyFormatter();
+  const { language, t } = useLanguage();
   const [period, setPeriod] = useState<Period>(() => currentPeriod());
   const [data, setData] = useState<ReportsData | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [exportStatus, setExportStatus] = useState<"idle" | ExportType>("idle");
   const [exportError, setExportError] = useState("");
-  const periodOptions = useMemo(() => recentMonthOptions(), []);
+  const periodOptions = useMemo(() => recentMonthOptions(language), [language]);
 
   const loadReports = useCallback(async () => {
     try {
@@ -122,18 +124,18 @@ export function ReportsPanel() {
       const extension = type === "pdf" ? "pdf" : "xlsx";
       await apiDownload(`/api/reports/export/${type}?${query.toString()}`, `credentia-rapor-${filePeriod(period)}.${extension}`);
     } catch {
-      setExportError("Rapor dışa aktarılırken bir sorun oluştu.");
+      setExportError(t("reports.exportError"));
     } finally {
       setExportStatus("idle");
     }
   }
 
   if (status === "loading") {
-    return <section className="card"><div className="state-card">Rapor verileri yükleniyor.</div></section>;
+    return <section className="card"><div className="state-card">{t("reports.loading")}</div></section>;
   }
 
   if (status === "error" || !data) {
-    return <section className="card"><div className="state-card error">Rapor verileri alınamadı. Backend çalışıyor mu?</div></section>;
+    return <section className="card"><div className="state-card error">{t("reports.error")}</div></section>;
   }
 
   const hasReportData = data.transactions.length > 0;
@@ -143,11 +145,11 @@ export function ReportsPanel() {
       <section className="card">
         <div className="section-heading">
           <div>
-            <h2>Özet</h2>
-            <p className="muted">Dönem: {formatMonthYear(period.month, period.year)}</p>
+            <h2>{t("reports.summary")}</h2>
+            <p className="muted">{t("reports.period")}: {formatMonthYear(period.month, period.year, language)}</p>
           </div>
           <label className="field compact-field">
-            <span>Dönem</span>
+            <span>{t("reports.period")}</span>
             <select
               value={periodKey(period)}
               onChange={(event) => {
@@ -166,59 +168,59 @@ export function ReportsPanel() {
 
         <div className="filter-grid" style={{ marginTop: 14 }}>
           <button className="secondary-button" disabled={exportStatus !== "idle"} type="button" onClick={() => void handleExport("pdf")}>
-            {exportStatus === "pdf" ? "PDF hazırlanıyor" : "PDF indir"}
+            {exportStatus === "pdf" ? t("reports.preparingPdf") : t("reports.downloadPdf")}
           </button>
           <button className="secondary-button" disabled={exportStatus !== "idle"} type="button" onClick={() => void handleExport("excel")}>
-            {exportStatus === "excel" ? "Excel hazırlanıyor" : "Excel indir"}
+            {exportStatus === "excel" ? t("reports.preparingExcel") : t("reports.downloadExcel")}
           </button>
         </div>
         {exportError ? <p className="form-error">{exportError}</p> : null}
 
         {!hasReportData ? (
-          <div className="empty-state">Bu dönemde kayıtlı veri bulunamadı.</div>
+          <div className="empty-state">{t("reports.noData")}</div>
         ) : null}
         <div className="status-list">
           <div className="status-row">
-            <span>Toplam gelir</span>
+            <span>{t("reports.totalIncome")}</span>
             <strong className="positive">{formatCurrency(data.summary.income)}</strong>
           </div>
           <div className="status-row">
-            <span>Toplam gider</span>
+            <span>{t("reports.totalExpense")}</span>
             <strong className="negative">{formatCurrency(data.summary.expense)}</strong>
           </div>
           <div className="status-row">
-            <span>Net bakiye</span>
+            <span>{t("reports.netBalance")}</span>
             <strong>{formatCurrency(data.summary.balance)}</strong>
           </div>
         </div>
 
         <div style={{ marginTop: 22 }}>
-          <h2>İşlem dökümü</h2>
+          <h2>{t("reports.transactionList")}</h2>
           <div className="table-scroll" style={{ marginTop: 12 }}>
             <table className="table">
               <thead>
                 <tr>
-                  <th>Tarih</th>
-                  <th>Açıklama</th>
-                  <th>Kategori</th>
-                  <th>Tür</th>
-                  <th>Tutar</th>
+                  <th>{t("common.date")}</th>
+                  <th>{t("common.description")}</th>
+                  <th>{t("common.category")}</th>
+                  <th>{t("common.type")}</th>
+                  <th>{t("common.amount")}</th>
                 </tr>
               </thead>
               <tbody>
                 {data.transactions.length === 0 ? (
                   <tr>
                     <td className="muted" colSpan={5}>
-                      Bu dönemde kayıtlı işlem yok.
+                      {t("reports.noTransactions")}
                     </td>
                   </tr>
                 ) : (
                   data.transactions.map((transaction, index) => (
                     <tr key={`${transaction.occurred_on}-${transaction.category}-${transaction.amount}-${index}`}>
-                      <td>{formatDate(transaction.occurred_on)}</td>
-                      <td>{transaction.description || "Açıklama yok"}</td>
-                      <td>{transaction.category || "Kategori yok"}</td>
-                      <td>{transactionTypeLabel(transaction.type)}</td>
+                      <td>{formatDate(transaction.occurred_on, language)}</td>
+                      <td>{transaction.description || t("common.noDescription")}</td>
+                      <td>{transaction.category || t("common.noCategory")}</td>
+                      <td>{t(transactionTypeLabel(transaction.type))}</td>
                       <td className={transaction.type === "income" ? "positive" : "negative"}>
                         {transaction.type === "income" ? "+" : "-"}
                         {formatCurrency(transaction.amount)}
@@ -233,9 +235,9 @@ export function ReportsPanel() {
       </section>
 
       <section className="card">
-        <h2>Kategori bazlı giderler</h2>
+        <h2>{t("reports.expensesByCategory")}</h2>
         {data.expense_breakdown.length === 0 ? (
-          <div className="empty-state">Bu dönemde kategorili gider işlemi yok.</div>
+          <div className="empty-state">{t("reports.noExpenseCategory")}</div>
         ) : (
           <>
             <CategoryChart data={data.expense_breakdown} />
@@ -254,9 +256,9 @@ export function ReportsPanel() {
         )}
 
         <div style={{ marginTop: 22 }}>
-          <h2>Kategori bazlı gelirler</h2>
+          <h2>{t("reports.incomeByCategory")}</h2>
           {data.income_breakdown.length === 0 ? (
-            <div className="empty-state">Bu dönemde kategorili gelir işlemi yok.</div>
+            <div className="empty-state">{t("reports.noIncomeCategory")}</div>
           ) : (
             <div className="status-list" style={{ marginTop: 12 }}>
               {data.income_breakdown.map((item) => (

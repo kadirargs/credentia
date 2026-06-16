@@ -6,9 +6,9 @@ export default function PortfolioSimulationPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Simülasyon"
-        title="Portföy Backtest"
-        description="Risk tercihi, vade ve yatırım tutarına göre geçmiş fiyat verileriyle teorik bir portföy simülasyonu oluştur."
+        eyebrowKey="portfolio.eyebrow"
+        titleKey="portfolio.title"
+        descriptionKey="portfolio.description"
       />
       <InvestmentSimulationPanel />
     </AppShell>

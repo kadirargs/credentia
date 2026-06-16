@@ -6,9 +6,9 @@ export default function TransactionsPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="İşlemler"
-        title="Gelir ve giderler"
-        description="Gelir ve giderleri PostgreSQL'e kaydet ve gerçek API'den listele."
+        eyebrowKey="transactions.eyebrow"
+        titleKey="transactions.title"
+        descriptionKey="transactions.description"
       />
       <TransactionsPanel />
     </AppShell>

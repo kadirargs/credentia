@@ -6,9 +6,9 @@ export default function AiRivalsSimulationPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Simülasyon"
-        title="Strateji Laboratuvarı"
-        description="Farklı risk profillerinin geçmiş piyasa verilerinde nasıl sonuç verdiğini karşılaştırın ve risk-getiri ilişkisini daha iyi anlayın."
+        eyebrowKey="strategy.eyebrow"
+        titleKey="strategy.title"
+        descriptionKey="strategy.description"
       />
       <AiRivalsPanel />
     </AppShell>

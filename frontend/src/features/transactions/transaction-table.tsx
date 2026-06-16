@@ -1,7 +1,7 @@
 "use client";
 
 import type { Category } from "@/features/categories/types";
-import { useCurrencyFormatter } from "@/components/theme/theme-provider";
+import { useCurrencyFormatter, useLanguage } from "@/components/theme/theme-provider";
 import { formatDate } from "@/lib/format";
 
 export type Transaction = {
@@ -35,6 +35,7 @@ export function TransactionTable({
   onSelectAll
 }: TransactionTableProps) {
   const { formatCurrency } = useCurrencyFormatter();
+  const { language, t } = useLanguage();
   const categoryNames = new Map(categories.map((category) => [category.id, category.name]));
   const selectedSet = new Set(selectedIds);
   const allSelected = transactions.length > 0 && transactions.every((transaction) => selectedSet.has(transaction.id));
@@ -53,15 +54,15 @@ export function TransactionTable({
                   type="checkbox"
                   onChange={(event) => onSelectAll?.(event.target.checked)}
                 />
-                Tümünü seç
+                {language === "en" ? "Select all" : "Tümünü seç"}
               </label>
             </th>
           ) : null}
-          <th>Açıklama</th>
-          <th>Kategori</th>
-          <th>Tarih</th>
-          <th>Tutar</th>
-          {hasActions ? <th>İşlem</th> : null}
+          <th>{t("common.description")}</th>
+          <th>{t("common.category")}</th>
+          <th>{t("common.date")}</th>
+          <th>{t("common.amount")}</th>
+          {hasActions ? <th>{t("common.action")}</th> : null}
         </tr>
       </thead>
       <tbody>
@@ -77,7 +78,7 @@ export function TransactionTable({
               {hasSelection ? (
                 <td>
                   <input
-                    aria-label={`${transaction.description || "İşlem"} seç`}
+                    aria-label={`${transaction.description || t("common.action")} seç`}
                     checked={selectedSet.has(transaction.id)}
                     type="checkbox"
                     onChange={(event) => onSelect?.(transaction.id, event.target.checked)}
@@ -85,8 +86,8 @@ export function TransactionTable({
                 </td>
               ) : null}
               <td>{transaction.description.trim() || "-"}</td>
-              <td>{transaction.category_id ? categoryNames.get(transaction.category_id) ?? "Kategori yok" : "Kategori yok"}</td>
-              <td>{formatDate(transaction.occurred_on)}</td>
+              <td>{transaction.category_id ? categoryNames.get(transaction.category_id) ?? t("common.noCategory") : t("common.noCategory")}</td>
+              <td>{formatDate(transaction.occurred_on, language)}</td>
               <td className={transaction.type === "income" ? "positive" : "negative"}>
                 {transaction.type === "income" ? "+" : "-"}
                 {formatCurrency(transaction.amount)}

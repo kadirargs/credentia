@@ -6,9 +6,9 @@ export default function PreferencesPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Tercihler"
-        title="Uygulama ayarları"
-        description="Credentia arayüzünü kullanım şekline göre düzenle."
+        eyebrowKey="common.preferences"
+        titleKey="preferences.title"
+        descriptionKey="preferences.description"
       />
       <PreferencesPanel />
     </AppShell>

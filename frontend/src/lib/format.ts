@@ -18,21 +18,25 @@ export function formatCurrency(value: number, currency: CurrencyCode = "TRY") {
   }).format(safeValue);
 }
 
-export function formatDate(value: string) {
+function localeFromLanguage(language: "tr" | "en" = "tr") {
+  return language === "en" ? "en-US" : "tr-TR";
+}
+
+export function formatDate(value: string, language: "tr" | "en" = "tr") {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("tr-TR", {
+  return new Intl.DateTimeFormat(localeFromLanguage(language), {
     day: "2-digit",
     month: "long",
     year: "numeric"
   }).format(new Date(year, month - 1, day));
 }
 
-export function formatMonthYear(month: number, year: number) {
-  return new Intl.DateTimeFormat("tr-TR", {
+export function formatMonthYear(month: number, year: number, language: "tr" | "en" = "tr") {
+  return new Intl.DateTimeFormat(localeFromLanguage(language), {
     month: "long",
     year: "numeric"
   }).format(new Date(year, month - 1, 1));

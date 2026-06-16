@@ -6,7 +6,7 @@ import { BudgetList } from "@/features/budgets/budget-list";
 import type { Budget, BudgetSummary } from "@/features/budgets/types";
 import type { Category } from "@/features/categories/types";
 import { TransactionTable, type Transaction } from "@/features/transactions/transaction-table";
-import { useCurrencyFormatter, useDashboardViewMode } from "@/components/theme/theme-provider";
+import { useCurrencyFormatter, useDashboardViewMode, useLanguage } from "@/components/theme/theme-provider";
 import { apiGet } from "@/lib/api";
 import { formatMonthYear } from "@/lib/format";
 
@@ -40,17 +40,6 @@ type CategoryInsights = {
   topIncomeCategory: TopCategoryItem | null;
 };
 
-const breakdownLabels = {
-  income: {
-    title: "Kategori bazlı gelir dağılımı",
-    empty: "Henüz kategorili gelir işlemi yok."
-  },
-  expense: {
-    title: "Kategori bazlı gider dağılımı",
-    empty: "Henüz kategorili gider işlemi yok."
-  }
-};
-
 function currentPeriod(): Period {
   const today = new Date();
   return {
@@ -59,7 +48,7 @@ function currentPeriod(): Period {
   };
 }
 
-function recentMonthOptions() {
+function recentMonthOptions(language: "tr" | "en") {
   const today = new Date();
 
   return Array.from({ length: 12 }, (_, index) => {
@@ -69,7 +58,7 @@ function recentMonthOptions() {
 
     return {
       key: `${year}-${month}`,
-      label: formatMonthYear(month, year),
+      label: formatMonthYear(month, year, language),
       month,
       year
     };
@@ -158,13 +147,15 @@ function CategoryInsightCard({
   periodLabel,
   title,
   totalAmount,
-  totalLabel
+  totalLabel,
+  emptyLabel
 }: {
   category: TopCategoryItem | null;
   periodLabel: string;
   title: string;
   totalAmount: number;
   totalLabel: string;
+  emptyLabel: string;
 }) {
   const { formatCurrency } = useCurrencyFormatter();
 
@@ -181,7 +172,7 @@ function CategoryInsightCard({
           <p className="insight-value">{formatCurrency(category?.amount ?? 0)}</p>
         </>
       ) : (
-        <div className="empty-state">Bu ay veri yok</div>
+        <div className="empty-state">{emptyLabel}</div>
       )}
     </section>
   );
@@ -190,6 +181,7 @@ function CategoryInsightCard({
 export function DashboardPanel() {
   const { dashboardViewMode } = useDashboardViewMode();
   const { formatCurrency } = useCurrencyFormatter();
+  const { language, t } = useLanguage();
   const [data, setData] = useState<DashboardData | null>(null);
   const [selectedBreakdown, setSelectedBreakdown] = useState<BreakdownType>("expense");
   const [mainPanel, setMainPanel] = useState<MainPanel>("transactions");
@@ -254,18 +246,19 @@ export function DashboardPanel() {
   );
 
   if (status === "loading") {
-    return <section className="card"><div className="state-card">Dashboard verileri yükleniyor.</div></section>;
+    return <section className="card"><div className="state-card">{t("dashboard.loading")}</div></section>;
   }
 
   if (status === "error" || !data) {
-    return <section className="card"><div className="state-card error">Dashboard verileri alınamadı. Backend çalışıyor mu?</div></section>;
+    return <section className="card"><div className="state-card error">{t("dashboard.error")}</div></section>;
   }
 
   const activeBreakdown = selectedBreakdown === "income" ? data.incomeBreakdown : data.expenseBreakdown;
-  const activeLabels = breakdownLabels[selectedBreakdown];
+  const activeTitle = selectedBreakdown === "income" ? t("dashboard.incomeDistribution") : t("dashboard.expenseDistribution");
+  const activeEmpty = selectedBreakdown === "income" ? t("dashboard.noIncomeCategory") : t("dashboard.noExpenseCategory");
   const summary = data.analyticsSummary;
-  const monthOptions = recentMonthOptions();
-  const selectedPeriodLabel = formatMonthYear(categoryPeriod.month, categoryPeriod.year);
+  const monthOptions = recentMonthOptions(language);
+  const selectedPeriodLabel = formatMonthYear(categoryPeriod.month, categoryPeriod.year, language);
   const showDetailedAnalytics = dashboardViewMode === "detailed";
 
   return (
@@ -274,7 +267,7 @@ export function DashboardPanel() {
         <MetricCard
           changePercent={summary.incomeChangePercent}
           comparisonUnavailable={!hasComparisonData(summary.previousMonthIncome, summary.incomeChangePercent)}
-          label="Toplam gelir"
+          label={t("dashboard.totalIncome")}
           selected={selectedBreakdown === "income" && mainPanel === "transactions"}
           showComparison={showDetailedAnalytics}
           tone="positive"
@@ -287,7 +280,7 @@ export function DashboardPanel() {
         <MetricCard
           changePercent={summary.expenseChangePercent}
           comparisonUnavailable={!hasComparisonData(summary.previousMonthExpense, summary.expenseChangePercent)}
-          label="Toplam gider"
+          label={t("dashboard.totalExpense")}
           selected={selectedBreakdown === "expense" && mainPanel === "transactions"}
           showComparison={showDetailedAnalytics}
           tone="negative"
@@ -300,13 +293,13 @@ export function DashboardPanel() {
         <MetricCard
           changePercent={summary.netBalanceChangePercent}
           comparisonUnavailable={!hasComparisonData(summary.previousMonthNetBalance, summary.netBalanceChangePercent)}
-          label="Net bakiye"
+          label={t("dashboard.netBalance")}
           showComparison={showDetailedAnalytics}
           tone={summary.selectedMonthNetBalance >= 0 ? "positive" : "negative"}
           value={summary.selectedMonthNetBalance}
         />
         <MetricCard
-          label="Bütçe kullanımı"
+          label={t("dashboard.budgetUsage")}
           selected={mainPanel === "budgets"}
           suffix="%"
           tone={data.budgetSummary.usage_percentage > 100 ? "negative" : "neutral"}
@@ -319,12 +312,12 @@ export function DashboardPanel() {
         <>
       <section className="card insight-controls" style={{ marginTop: 18 }}>
         <div>
-          <h2>Kategori öne çıkanları</h2>
-          <p className="muted">İşlemler sayfasındaki kayıtlar seçilen aya göre toplanır.</p>
+          <h2>{t("dashboard.categoryHighlights")}</h2>
+          <p className="muted">{t("dashboard.categoryHighlightsDescription")}</p>
         </div>
         <div className="insight-control-actions">
           <label className="field compact-field">
-            <span>Ay</span>
+            <span>{t("common.month")}</span>
             <select
               value={periodKey(categoryPeriod)}
               onChange={(event) => {
@@ -340,7 +333,7 @@ export function DashboardPanel() {
             </select>
           </label>
           <button className="secondary-button" type="button" onClick={loadDashboard}>
-            Yenile
+            {t("common.refresh")}
           </button>
         </div>
       </section>
@@ -349,16 +342,18 @@ export function DashboardPanel() {
         <CategoryInsightCard
           category={categoryInsights.topExpenseCategory}
           periodLabel={selectedPeriodLabel}
-          title="En Çok Harcanan Kategori"
+          title={t("dashboard.topExpenseCategory")}
           totalAmount={categoryInsights.selectedMonthExpense}
-          totalLabel="gideri"
+          totalLabel={t("dashboard.selectedMonthExpense")}
+          emptyLabel={t("dashboard.noDataThisMonth")}
         />
         <CategoryInsightCard
           category={categoryInsights.topIncomeCategory}
           periodLabel={selectedPeriodLabel}
-          title="En Çok Gelir Gelen Kategori"
+          title={t("dashboard.topIncomeCategory")}
           totalAmount={categoryInsights.selectedMonthIncome}
-          totalLabel="geliri"
+          totalLabel={t("dashboard.selectedMonthIncome")}
+          emptyLabel={t("dashboard.noDataThisMonth")}
         />
       </div>
 
@@ -367,14 +362,14 @@ export function DashboardPanel() {
 
       <div className="grid content-grid" style={{ marginTop: 18 }}>
         <section className="card">
-          <h2>{mainPanel === "budgets" ? "Bütçe durumu" : "Son işlemler"}</h2>
+          <h2>{mainPanel === "budgets" ? t("dashboard.budgetStatus") : t("dashboard.recentTransactions")}</h2>
           <div style={{ marginTop: 16 }}>
             {mainPanel === "budgets" ? (
               <BudgetList budgets={data.budgets} />
             ) : (
               <TransactionTable
                 categories={data.categories}
-                emptyMessage="Henüz işlem yok. İlk gelir veya giderini İşlemler sayfasından ekleyebilirsin."
+                emptyMessage={t("dashboard.noTransactions")}
                 transactions={data.transactions.slice(0, 5)}
               />
             )}
@@ -382,9 +377,9 @@ export function DashboardPanel() {
         </section>
 
         <section className="card">
-          <h2>{activeLabels.title}</h2>
+          <h2>{activeTitle}</h2>
           {activeBreakdown.length === 0 ? (
-            <div className="empty-state">{activeLabels.empty}</div>
+            <div className="empty-state">{activeEmpty}</div>
           ) : (
             <>
               <CategoryChart data={activeBreakdown} />

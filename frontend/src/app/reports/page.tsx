@@ -6,9 +6,9 @@ export default function ReportsPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Rapor"
-        title="Basit aylık rapor"
-        description="Gelir, gider, net bakiye, kategori dağılımları ve işlem dökümü."
+        eyebrowKey="reports.eyebrow"
+        titleKey="reports.title"
+        descriptionKey="reports.description"
       />
       <ReportsPanel />
     </AppShell>

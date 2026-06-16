@@ -6,9 +6,9 @@ export default function CrisisScenariosSimulationPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Simülasyon"
-        title="Kriz Senaryoları"
-        description="Seçilen kriz döneminde kripto varlığın aylık fiyat değişimini ve sanal yatırım değerini inceleyin."
+        eyebrowKey="crisis.eyebrow"
+        titleKey="crisis.title"
+        descriptionKey="crisis.description"
       />
       <CrisisScenariosPanel />
     </AppShell>

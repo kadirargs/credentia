@@ -1,19 +1,20 @@
 "use client";
 
-import { BadgeDollarSign, BarChart3, CircleDollarSign, Euro, LayoutDashboard, Moon, Sun } from "lucide-react";
-import { useCurrencyPreference, useDashboardViewMode, useTheme } from "@/components/theme/theme-provider";
+import { BadgeDollarSign, BarChart3, CircleDollarSign, Euro, Languages, LayoutDashboard, Moon, Sun } from "lucide-react";
+import { useCurrencyPreference, useDashboardViewMode, useLanguage, useTheme } from "@/components/theme/theme-provider";
+import type { TranslationKey } from "@/lib/translations";
 
 const themeOptions = [
   {
     value: "light",
-    label: "Açık tema",
-    description: "Gündüz kullanımına uygun açık arayüz.",
+    labelKey: "preferences.lightTheme",
+    descriptionKey: "preferences.lightThemeDescription",
     icon: Sun
   },
   {
     value: "dark",
-    label: "Koyu tema",
-    description: "Daha düşük parlaklıkla koyu arayüz.",
+    labelKey: "preferences.darkTheme",
+    descriptionKey: "preferences.darkThemeDescription",
     icon: Moon
   }
 ] as const;
@@ -21,14 +22,14 @@ const themeOptions = [
 const dashboardViewOptions = [
   {
     value: "simple",
-    label: "Sade",
-    description: "Yalnızca temel finans özeti, son işlemler ve kategori grafiği.",
+    labelKey: "preferences.simple",
+    descriptionKey: "preferences.simpleDescription",
     icon: LayoutDashboard
   },
   {
     value: "detailed",
-    label: "Detaylı",
-    description: "Temel özetlere ek olarak gelişmiş analytics kartları.",
+    labelKey: "preferences.detailed",
+    descriptionKey: "preferences.detailedDescription",
     icon: BarChart3
   }
 ] as const;
@@ -36,21 +37,32 @@ const dashboardViewOptions = [
 const currencyOptions = [
   {
     value: "TRY",
-    label: "Türk Lirası (₺)",
-    description: "₺ sembolü ve Türkçe sayı formatı.",
+    labelKey: "preferences.try",
+    descriptionKey: "preferences.tryDescription",
     icon: BadgeDollarSign
   },
   {
     value: "USD",
-    label: "Dolar ($)",
-    description: "$ sembolü ve dolar gösterimi.",
+    labelKey: "preferences.usd",
+    descriptionKey: "preferences.usdDescription",
     icon: CircleDollarSign
   },
   {
     value: "EUR",
-    label: "Euro (€)",
-    description: "€ sembolü ve euro gösterimi.",
+    labelKey: "preferences.eur",
+    descriptionKey: "preferences.eurDescription",
     icon: Euro
+  }
+] as const;
+
+const languageOptions = [
+  {
+    value: "tr",
+    labelKey: "preferences.turkish"
+  },
+  {
+    value: "en",
+    labelKey: "preferences.english"
   }
 ] as const;
 
@@ -58,16 +70,17 @@ export function PreferencesPanel() {
   const { theme, setTheme } = useTheme();
   const { dashboardViewMode, setDashboardViewMode } = useDashboardViewMode();
   const { currency, exchangeRateDate, exchangeRates, exchangeRateStatus, refreshExchangeRates, setCurrency } = useCurrencyPreference();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <div className="preferences-stack">
       <section className="card preferences-card">
         <div>
-          <h2>Görünüm</h2>
-          <p className="muted">Uygulama temasını seç. Tercihin bu tarayıcıda kalıcı olarak saklanır.</p>
+          <h2>{t("preferences.appearance")}</h2>
+          <p className="muted">{t("preferences.appearanceDescription")}</p>
         </div>
 
-        <div className="theme-options" role="radiogroup" aria-label="Tema seçimi">
+        <div className="theme-options" role="radiogroup" aria-label={t("preferences.appearance")}>
           {themeOptions.map((option) => {
             const Icon = option.icon;
             const selected = theme === option.value;
@@ -83,8 +96,8 @@ export function PreferencesPanel() {
               >
                 <Icon size={22} />
                 <span>
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
+                  <strong>{t(option.labelKey as TranslationKey)}</strong>
+                  <small>{t(option.descriptionKey as TranslationKey)}</small>
                 </span>
               </button>
             );
@@ -94,13 +107,11 @@ export function PreferencesPanel() {
 
       <section className="card preferences-card">
         <div>
-          <h2>Dashboard Görünümü</h2>
-          <p className="muted">
-            Dashboard’da yalnızca temel finans özetini veya gelişmiş analiz kartlarını görüntüleyebilirsiniz.
-          </p>
+          <h2>{t("preferences.dashboardView")}</h2>
+          <p className="muted">{t("preferences.dashboardViewDescription")}</p>
         </div>
 
-        <div className="theme-options" role="radiogroup" aria-label="Dashboard görünümü">
+        <div className="theme-options" role="radiogroup" aria-label={t("preferences.dashboardView")}>
           {dashboardViewOptions.map((option) => {
             const Icon = option.icon;
             const selected = dashboardViewMode === option.value;
@@ -116,8 +127,8 @@ export function PreferencesPanel() {
               >
                 <Icon size={22} />
                 <span>
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
+                  <strong>{t(option.labelKey as TranslationKey)}</strong>
+                  <small>{t(option.descriptionKey as TranslationKey)}</small>
                 </span>
               </button>
             );
@@ -127,13 +138,11 @@ export function PreferencesPanel() {
 
       <section className="card preferences-card">
         <div>
-          <h2>Para Birimi</h2>
-          <p className="muted">
-            TL olarak kaydedilen tutarlar, seçilen para birimine güncel TRY kuru ile çevrilerek gösterilir.
-          </p>
+          <h2>{t("preferences.currency")}</h2>
+          <p className="muted">{t("preferences.currencyDescription")}</p>
         </div>
 
-        <div className="theme-options" role="radiogroup" aria-label="Para birimi seçimi">
+        <div className="theme-options" role="radiogroup" aria-label={t("preferences.currency")}>
           {currencyOptions.map((option) => {
             const Icon = option.icon;
             const selected = currency === option.value;
@@ -149,8 +158,8 @@ export function PreferencesPanel() {
               >
                 <Icon size={22} />
                 <span>
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
+                  <strong>{t(option.labelKey as TranslationKey)}</strong>
+                  <small>{t(option.descriptionKey as TranslationKey)}</small>
                 </span>
               </button>
             );
@@ -160,18 +169,48 @@ export function PreferencesPanel() {
         <div className="currency-rate-note">
           <span>
             {exchangeRateStatus === "loading"
-              ? "Güncel kur alınıyor."
+              ? t("preferences.rateLoading")
               : exchangeRateStatus === "error"
-                ? "Güncel kur alınamadı; varsa son kayıtlı kur kullanılır."
-                : `Kur tarihi: ${exchangeRateDate ?? "-"}`}
+                ? t("preferences.rateError")
+                : `${t("preferences.rateDate")}: ${exchangeRateDate ?? "-"}`}
           </span>
           <span>
             1 TL = ${exchangeRates.USD?.toLocaleString("tr-TR", { maximumFractionDigits: 5 }) ?? "-"} / €
             {exchangeRates.EUR?.toLocaleString("tr-TR", { maximumFractionDigits: 5 }) ?? "-"}
           </span>
           <button className="small-button" type="button" onClick={() => void refreshExchangeRates()}>
-            Kuru yenile
+            {t("preferences.refreshRate")}
           </button>
+        </div>
+      </section>
+
+      <section className="card preferences-card">
+        <div>
+          <h2>{t("preferences.language")}</h2>
+          <p className="muted">{t("preferences.languageDescription")}</p>
+        </div>
+
+        <div className="theme-options" role="radiogroup" aria-label={t("preferences.language")}>
+          {languageOptions.map((option) => {
+            const selected = language === option.value;
+
+            return (
+              <button
+                aria-checked={selected}
+                className={`theme-option ${selected ? "selected" : ""}`}
+                key={option.value}
+                onClick={() => setLanguage(option.value)}
+                role="radio"
+                type="button"
+              >
+                <Languages size={22} />
+                <span>
+                  <strong>{t(option.labelKey as TranslationKey)}</strong>
+                  <small>{option.value}</small>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
     </div>

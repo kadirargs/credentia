@@ -1,37 +1,43 @@
+"use client";
+
 import { FlaskConical, ShieldAlert, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { useLanguage } from "@/components/theme/theme-provider";
 import { PageHeader } from "@/components/ui/page-header";
+import type { TranslationKey } from "@/lib/translations";
 
 const simulations = [
   {
     href: "/investment-simulation/portfolio",
-    title: "Portföy Backtest",
-    description: "Risk, vade ve tutara göre kripto portföyünün geçmiş performansını hesapla.",
+    titleKey: "common.portfolioBacktest",
+    descriptionKey: "portfolio.description",
     icon: TrendingUp
   },
   {
     href: "/investment-simulation/ai-rivals",
-    title: "Strateji Laboratuvarı",
-    description: "Farklı risk profillerinin geçmiş piyasa verilerinde nasıl davrandığını karşılaştır.",
+    titleKey: "common.strategyLab",
+    descriptionKey: "strategy.description",
     icon: FlaskConical
   },
   {
     href: "/investment-simulation/crisis-scenarios",
-    title: "Kriz Senaryosu",
-    description: "Belirli kriz dönemlerinde seçili varlığın teorik seyrini incele.",
+    titleKey: "common.crisisScenarios",
+    descriptionKey: "crisis.description",
     icon: ShieldAlert
   }
 ];
 
 export default function InvestmentSimulationPage() {
+  const { t } = useLanguage();
+
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Simülasyon"
-        title="Yatırım Simülasyonları"
-        description="Kullanmak istediğin simülasyon türünü seç."
+        eyebrowKey="investment.eyebrow"
+        titleKey="investment.title"
+        descriptionKey="investment.description"
       />
       <section className="simulation-picker-grid">
         {simulations.map((item) => {
@@ -40,8 +46,8 @@ export default function InvestmentSimulationPage() {
             <Link className="card simulation-picker-card" href={item.href} key={item.href}>
               <Icon size={24} />
               <span>
-                <strong>{item.title}</strong>
-                <small>{item.description}</small>
+                <strong>{t(item.titleKey as TranslationKey)}</strong>
+                <small>{t(item.descriptionKey as TranslationKey)}</small>
               </span>
             </Link>
           );

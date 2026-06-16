@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrencyFormatter } from "@/components/theme/theme-provider";
+import { useCurrencyFormatter, useLanguage } from "@/components/theme/theme-provider";
 
 type MetricCardProps = {
   label: string;
@@ -14,15 +14,15 @@ type MetricCardProps = {
   onClick?: () => void;
 };
 
-function formatChangePercent(value: number) {
+function formatChangePercent(value: number, language: "tr" | "en") {
   const absoluteValue = Math.abs(value);
-  return `%${absoluteValue.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`;
+  const formatted = absoluteValue.toLocaleString(language === "en" ? "en-US" : "tr-TR", { maximumFractionDigits: 2 });
+  return language === "en" ? `${formatted}%` : `%${formatted}`;
 }
 
-function changeText(value: number) {
-  if (value > 0) return `\u2191 ${formatChangePercent(value)} ge\u00e7en aya g\u00f6re`;
-  if (value < 0) return `\u2193 ${formatChangePercent(value)} ge\u00e7en aya g\u00f6re`;
-  return `%0 ge\u00e7en aya g\u00f6re`;
+function changeText(value: number, language: "tr" | "en", comparedToPreviousMonth: string) {
+  const prefix = value > 0 ? "\u2191" : value < 0 ? "\u2193" : "";
+  return `${prefix ? `${prefix} ` : ""}${formatChangePercent(value, language)} ${comparedToPreviousMonth}`;
 }
 
 export function MetricCard({
@@ -37,6 +37,7 @@ export function MetricCard({
   onClick
 }: MetricCardProps) {
   const { formatCurrency } = useCurrencyFormatter();
+  const { language, t } = useLanguage();
   const hasValidChange = typeof changePercent === "number" && Number.isFinite(changePercent);
   const shouldShowComparison = showComparison && (comparisonUnavailable || hasValidChange);
   const changeTone = hasValidChange && changePercent > 0 ? "positive" : hasValidChange && changePercent < 0 ? "negative" : "";
@@ -49,7 +50,9 @@ export function MetricCard({
       </p>
       {shouldShowComparison ? (
         <p className={`metric-change ${comparisonUnavailable ? "" : changeTone}`}>
-          {comparisonUnavailable || !hasValidChange ? "Kar\u015f\u0131la\u015ft\u0131rma verisi yok" : changeText(changePercent)}
+          {comparisonUnavailable || !hasValidChange
+            ? t("dashboard.noComparison")
+            : changeText(changePercent, language, t("dashboard.comparedToPreviousMonth"))}
         </p>
       ) : null}
     </>

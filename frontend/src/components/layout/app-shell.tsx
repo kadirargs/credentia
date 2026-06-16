@@ -1,3 +1,5 @@
+"use client";
+
 import {
   BarChart3,
   Bot,
@@ -13,26 +15,31 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { useLanguage } from "@/components/theme/theme-provider";
+import type { TranslationKey } from "@/lib/translations";
+
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Gauge },
-  { href: "/transactions", label: "İşlemler", icon: Receipt },
-  { href: "/categories", label: "Kategoriler", icon: Folder },
-  { href: "/budgets", label: "Bütçeler", icon: WalletCards },
-  { href: "/reports", label: "Raporlar", icon: BarChart3 }
+  { href: "/dashboard", labelKey: "common.dashboard", icon: Gauge },
+  { href: "/transactions", labelKey: "common.transactions", icon: Receipt },
+  { href: "/categories", labelKey: "common.categories", icon: Folder },
+  { href: "/budgets", labelKey: "common.budgets", icon: WalletCards },
+  { href: "/reports", labelKey: "common.reports", icon: BarChart3 }
 ];
 
 const simulationItems = [
-  { href: "/investment-simulation/portfolio", label: "Portföy Backtest", icon: TrendingUp },
-  { href: "/investment-simulation/ai-rivals", label: "Strateji Laboratuvarı", icon: FlaskConical },
-  { href: "/investment-simulation/crisis-scenarios", label: "Kriz Senaryosu", icon: ShieldAlert }
+  { href: "/investment-simulation/portfolio", labelKey: "common.portfolioBacktest", icon: TrendingUp },
+  { href: "/investment-simulation/ai-rivals", labelKey: "common.strategyLab", icon: FlaskConical },
+  { href: "/investment-simulation/crisis-scenarios", labelKey: "common.crisisScenarios", icon: ShieldAlert }
 ];
 
 const utilityItems = [
-  { href: "/assistant", label: "AI Asistan", icon: Bot },
-  { href: "/preferences", label: "Tercihler", icon: Settings }
+  { href: "/assistant", labelKey: "common.assistant", icon: Bot },
+  { href: "/preferences", labelKey: "common.preferences", icon: Settings }
 ];
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { t } = useLanguage();
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -42,13 +49,13 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           </span>
           Credentia
         </Link>
-        <nav className="nav" aria-label="Ana menü">
+        <nav className="nav" aria-label={t("common.dashboard")}>
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link href={item.href} key={item.href}>
                 <Icon size={18} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey as TranslationKey)}</span>
               </Link>
             );
           })}
@@ -56,7 +63,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           <div className="nav-group">
             <Link className="nav-group-parent" href="/investment-simulation">
               <TrendingUp size={18} />
-              <span>Yatırım Simülasyonları</span>
+              <span>{t("common.investmentSimulations")}</span>
             </Link>
             <div className="nav-subitems">
               {simulationItems.map((item) => {
@@ -64,7 +71,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
                 return (
                   <Link href={item.href} key={item.href}>
                     <Icon size={16} />
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey as TranslationKey)}</span>
                   </Link>
                 );
               })}
@@ -76,14 +83,14 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             return (
               <Link href={item.href} key={item.href}>
                 <Icon size={18} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey as TranslationKey)}</span>
               </Link>
             );
           })}
         </nav>
         <div className="card sidebar-note">
           <PieChart size={22} />
-          <p>Aylık bütçe kullanımı ve kategori dağılımı tek ekranda izlenir.</p>
+          <p>{t("common.openingNote")}</p>
         </div>
       </aside>
       <main className="main">{children}</main>
